@@ -1,0 +1,613 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Loometehnoloogia</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <!-- Apply saved theme before first paint to avoid flash -->
+  <script>
+    (function(){
+      try {
+        var t = localStorage.getItem('lt-theme');
+        document.documentElement.setAttribute('data-theme', t === 'light' ? 'light' : 'dark');
+      } catch(e) {
+        document.documentElement.setAttribute('data-theme', 'dark');
+      }
+    })();
+  </script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root, [data-theme="dark"] {
+      --bg:          #07070f;
+      --surface:     #10101c;
+      --border:      #1c1c30;
+      --muted:       #55607a;
+      --text:        #dde3ed;
+      --tip-bg:      rgba(7,7,16,0.97);
+      --tip-border:  #252542;
+      --wheel-bg:    #0c0c1a;
+      --halo-glow:   rgba(190,130,255,0.35);
+      --halo-ring:   rgba(190,130,255,0.45);
+      --kw-fill:     rgba(220,180,255,0.9);
+      --kw-active:   #ffffff;
+      --kw-bg:       rgba(20,10,40,0.72);
+      --kw-bg-active:rgba(124,58,237,0.45);
+      --kw-stroke:   rgba(160,100,255,0.5);
+      --pill-fill:   rgba(124,58,237,0.28);
+      --pill-stroke: #a855f7;
+      --modal-bg:    #10101c;
+      --modal-border:#2e1f4a;
+      --modal-shadow:rgba(160,100,255,0.18);
+      --modal-hdr:   #c084fc;
+      --modal-sub:   #8890a4;
+      --toggle-bg:   #1c1c30;
+      --toggle-border:#2e2e50;
+      --lbl-shadow:  rgba(0,0,0,0.85);
+    }
+    [data-theme="light"] {
+      --bg:          #f5f5f7;
+      --surface:     #ffffff;
+      --border:      #dde0e8;
+      --muted:       #8a94a6;
+      --text:        #1a1a2e;
+      --tip-bg:      rgba(255,255,255,0.98);
+      --tip-border:  #d0d5e0;
+      --wheel-bg:    #eeeef4;
+      --halo-glow:   rgba(140,80,220,0.12);
+      --halo-ring:   rgba(140,80,220,0.35);
+      --kw-fill:     rgba(60,10,120,0.9);
+      --kw-active:   #2e0a6e;
+      --kw-bg:       rgba(240,235,255,0.82);
+      --kw-bg-active:rgba(167,139,250,0.3);
+      --kw-stroke:   rgba(109,40,217,0.4);
+      --pill-fill:   rgba(167,139,250,0.2);
+      --pill-stroke: #7c3aed;
+      --modal-bg:    #ffffff;
+      --modal-border:#d8d0f0;
+      --modal-shadow:rgba(109,40,217,0.12);
+      --modal-hdr:   #6d28d9;
+      --modal-sub:   #6b7280;
+      --toggle-bg:   #ffffff;
+      --toggle-border:#d0d5e0;
+      --lbl-shadow:  rgba(255,255,255,0.7);
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: var(--bg); color: var(--text);
+      min-height: 100vh; padding: 28px 16px 48px;
+      transition: background 0.3s, color 0.3s;
+    }
+    header { text-align: center; margin-bottom: 36px; }
+    header h1 { font-size: clamp(1.4rem,3.5vw,2.2rem); font-weight: 700; letter-spacing: -0.03em; color: var(--text); }
+    header p  { color: var(--muted); font-size: 0.875rem; margin-top: 6px; font-weight: 400; }
+
+    #theme-toggle {
+      position: fixed; top: 16px; right: 16px; z-index: 20000;
+      background: var(--toggle-bg); border: 1px solid var(--toggle-border);
+      border-radius: 50%; width: 38px; height: 38px;
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer; font-size: 1.1rem;
+      transition: background 0.2s, border-color 0.2s, box-shadow 0.2s;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+      font-family: inherit;
+    }
+    #theme-toggle:hover { box-shadow: 0 3px 12px rgba(0,0,0,0.3); }
+
+    .layout-wrap { position: relative; }
+    .layout { display: flex; gap: 36px; align-items: flex-start; justify-content: center; max-width: 960px; margin: 0 auto; }
+    #connector-svg { position: absolute; top:0; left:0; width:100%; height:100%; pointer-events:none; overflow:visible; z-index:5; }
+    #wheel-svg { display: block; width: min(580px, calc(100vw - 32px)); height: auto; flex-shrink: 0; overflow: visible; }
+    .sidebar { flex:1; min-width:240px; max-width:280px; }
+    .card { background:var(--surface); border:1px solid var(--border); border-radius:14px; padding:18px 20px; margin-bottom:10px; transition:background 0.3s, border-color 0.3s; }
+    .overall-card { text-align:center; padding:22px 20px; }
+    #ovr-pct { font-size:3.2rem; font-weight:700; line-height:1; color:var(--text); transition:color 0.4s; }
+    .ovr-label { color:var(--muted); font-size:0.72rem; margin-top:4px; text-transform:uppercase; letter-spacing:0.1em; font-weight:500; }
+    .actions { display:flex; gap:8px; margin-bottom:10px; }
+    button { flex:1; padding:9px 10px; border-radius:8px; border:1px solid var(--border); background:var(--surface); color:var(--text); font-size:0.78rem; font-family:inherit; font-weight:500; cursor:pointer; transition:background 0.15s, border-color 0.15s, color 0.15s; }
+    button:hover { background:var(--border); }
+    .sub-heading { font-size:0.68rem; text-transform:uppercase; letter-spacing:0.1em; color:var(--muted); margin-bottom:8px; font-weight:500; }
+    .t-row { margin-bottom:13px; } .t-row:last-child { margin-bottom:0; }
+    .t-head { display:flex; justify-content:space-between; align-items:center; margin-bottom:4px; }
+    .t-name { font-size:0.82rem; font-weight:600; } .t-count { font-size:0.78rem; color:var(--muted); font-weight:400; }
+    .bar { height:4px; background:var(--border); border-radius:99px; overflow:hidden; margin-bottom:6px; }
+    .bar-fill { height:100%; border-radius:99px; transition:width 0.35s ease; }
+    .tags { display:flex; flex-wrap:wrap; gap:3px; }
+    .tag { font-size:0.67rem; padding:2px 7px; border-radius:99px; border:1px solid; transition:opacity 0.25s; font-weight:400; }
+    .tag.done { opacity:1; font-weight:600; } .tag.pend { opacity:0.35; }
+    #tip { position:fixed; z-index:9999; pointer-events:none; display:none; background:var(--tip-bg); border:1px solid var(--tip-border); border-radius:9px; padding:9px 13px; font-size:12.5px; line-height:1.5; max-width:210px; color:var(--text); box-shadow:0 4px 16px rgba(0,0,0,0.15); font-weight:400; }
+    .arc-seg { cursor:pointer; } .arc-seg:hover { filter:brightness(1.4) saturate(1.2); }
+    .connector-path { stroke-dasharray:8 5; animation:connFlow 0.9s linear infinite; }
+    @keyframes connFlow { from{stroke-dashoffset:13;} to{stroke-dashoffset:0;} }
+    .connector-dot { animation:connPulse 1.8s ease-in-out infinite; }
+    @keyframes connPulse { 0%,100%{opacity:0.6;} 50%{opacity:1;} }
+    #detail-panel { position:absolute; width:260px; top:0; left:0; visibility:hidden; opacity:0; transition:opacity 0.2s ease; pointer-events:none; }
+    #detail-panel.open { visibility:visible; opacity:1; pointer-events:auto; }
+    #detail-header { display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:12px; }
+    #detail-title { font-size:0.9rem; font-weight:600; line-height:1.3; flex:1; margin-right:8px; }
+    #detail-close { background:none; border:none; color:var(--muted); font-size:1.1rem; cursor:pointer; padding:0; line-height:1; flex:none; transition:color 0.15s; font-family:inherit; }
+    #detail-close:hover { color:var(--text); background:none; }
+    #detail-textarea { width:100%; min-height:130px; resize:vertical; background:var(--bg); border:1px solid var(--border); border-radius:8px; color:var(--text); font-family:inherit; font-size:0.8rem; font-weight:400; line-height:1.65; padding:10px 12px; outline:none; transition:border-color 0.2s, background 0.3s, color 0.3s; }
+    #detail-textarea:focus { border-color:var(--muted); }
+    .modal-overlay { display:none; position:fixed; inset:0; z-index:10000; background:rgba(0,0,0,0.5); backdrop-filter:blur(4px); align-items:center; justify-content:center; }
+    .modal-box { background:var(--modal-bg); border:1px solid var(--modal-border); border-radius:18px; padding:28px 30px; max-width:400px; width:90%; position:relative; box-shadow:0 8px 40px var(--modal-shadow); transition:background 0.3s, border-color 0.3s; }
+    .modal-close { position:absolute; top:14px; right:16px; background:none; border:none; color:var(--muted); font-size:1.2rem; cursor:pointer; line-height:1; font-family:inherit; }
+    .modal-close:hover { color:var(--text); }
+    .modal-hdr { color:var(--modal-hdr); font-size:0.68rem; text-transform:uppercase; letter-spacing:0.12em; margin-bottom:6px; font-weight:600; }
+    .modal-sub { color:var(--modal-sub); font-size:0.78rem; line-height:1.55; margin-bottom:18px; font-weight:400; }
+    .modal-body { color:var(--text); font-size:0.82rem; line-height:1.7; white-space:pre-line; font-weight:400; }
+    #halo-tags { display:flex; flex-wrap:wrap; gap:8px; }
+    .halo-kw { cursor:pointer; }
+    .halo-kw:hover rect.kw-bg { opacity:1 !important; }
+    .halo-kw:hover text { filter:brightness(1.3); }
+    @media (max-width:680px) { .sidebar { min-width:100%; max-width:100%; } }
+  </style>
+</head>
+<body>
+
+<button id="theme-toggle" title="Toggle theme">🌙</button>
+
+<header>
+  <h1>Loometehnoloogia</h1>
+  <p>Kliki igal moodulil, et näha sisu.</p>
+</header>
+
+<div class="layout-wrap">
+  <svg id="connector-svg" xmlns="http://www.w3.org/2000/svg"></svg>
+  <div class="card" id="detail-panel">
+    <div id="detail-header">
+      <div id="detail-title"></div>
+      <button id="detail-close" title="Close">✕</button>
+    </div>
+    <textarea id="detail-textarea" placeholder="Add a description…"></textarea>
+  </div>
+  <div class="layout">
+    <svg id="wheel-svg" viewBox="0 0 800 800" xmlns="http://www.w3.org/2000/svg" style="overflow:visible"></svg>
+    <div class="sidebar">
+      <div class="card overall-card">
+        <div id="ovr-pct">0%</div>
+        <div class="ovr-label">Overall Progress</div>
+      </div>
+      <div class="actions">
+        <button id="btn-reset">Reset All</button>
+        <button id="btn-demo">Fill All (Demo)</button>
+      </div>
+      <div class="sub-heading">By Subject</div>
+      <div class="card" id="subject-cards" style="padding:16px 18px;"></div>
+    </div>
+  </div>
+</div>
+
+<div id="tip"></div>
+
+<div id="steam-overlay" class="modal-overlay">
+  <div class="modal-box">
+    <button class="modal-close" id="steam-close">✕</button>
+    <div class="modal-hdr">STEAM</div>
+    <div id="steam-body" class="modal-body"></div>
+  </div>
+</div>
+
+<div id="halo-overlay" class="modal-overlay">
+  <div class="modal-box" style="max-width:360px">
+    <button class="modal-close" id="halo-close">✕</button>
+    <div class="modal-hdr">Läbivad pädevused</div>
+    <p class="modal-sub">Kõiki mooduleid läbivad ühised pädevused, mis toetavad terviklikku õppimist.</p>
+    <div id="halo-tags"></div>
+  </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+
+// ── Theme ─────────────────────────────────────────────────────────────────────
+const html      = document.documentElement;
+const toggleBtn = document.getElementById('theme-toggle');
+
+// Read saved theme with localStorage fallback
+function getTheme() {
+  try { return localStorage.getItem('lt-theme') || 'dark'; } catch(e) { return 'dark'; }
+}
+function setTheme(t) {
+  try { localStorage.setItem('lt-theme', t); } catch(e) {}
+  html.setAttribute('data-theme', t);
+}
+
+const saved = getTheme();
+setTheme(saved);
+toggleBtn.textContent = saved === 'dark' ? '🌙' : '☀️';
+
+toggleBtn.addEventListener('click', () => {
+  const next = html.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+  setTheme(next);
+  toggleBtn.textContent = next === 'dark' ? '🌙' : '☀️';
+  render();
+});
+function cv(n) { return getComputedStyle(html).getPropertyValue(n).trim(); }
+
+// ── Data ──────────────────────────────────────────────────────────────────────
+const DATA = [
+  { name:"Inseneeria ja kaasaegsed tehnoloogiad", color:"#ec4899", subs:["Multimeedia","Robootika","Elektroonika","Inseneeria"] },
+  { name:"Pärandil põhinev loome",                color:"#a855f7", subs:["Traditsioon","Meisterlikkus","Mustriteadlikkus","Identiteet"] },
+  { name:"Materjalide töötlemine",                color:"#14b8a6", subs:["Materjalitundmine","Töövõtted","Konstruktsioon","Viimistlus"] },
+  { name:"Igapäevaelus toimetuleku oskused",      color:"#3b82f6", subs:["Turvalisus","Majapidamine","Eelarvestamine","Toiduvalmistamine"] },
+];
+
+const HALO_KEYWORDS = [
+  { text:"OHUTUS",               lines:["OHUTUS"] },
+  { text:"KESTLIKKUS",           lines:["KESTLIKKUS"] },
+  { text:"KRIITILINE MÕTLEMINE", lines:["KRIITILINE","MÕTLEMINE"] },
+  { text:"PROBLEEMILAHENDUS",    lines:["PROBLEEM-","ILAHENDUS"] },
+  { text:"LOOVUS",               lines:["LOOVUS"] },
+  { text:"KOOSTÖÖ",              lines:["KOOSTÖÖ"] },
+  { text:"STEAM", lines:["STEAM"], info:"STEAM on õpikäsitus, mis ühendab viis omavahel seotud valdkonda: loodusteadused (Science), tehnoloogia (Technology), inseneeria (Engineering), kunstid ja disaini (Arts) ning matemaatika (Mathematics).\n\nAlgne mõiste STEM laienes STEAM-iks, et rõhutada loovuse, disainimõtlemise ja kasutajakogemuse olulist rolli tehnoloogiliste lahenduste loomisel. STEAM ei keskendu ainult teadmiste omandamisele, vaid praktilisele probleemilahendusele, prototüüpimisele ja päriselu väljakutsete lahendamisele." },
+  { text:"LÕIMING", lines:["LÕIMING"], info:"Lõiming on erinevate õppeainete või teemade teadlik sidumine tervikuks, et õppimine oleks seostatum ja elulähedasem. Eesmärk on aidata õppijal näha seoseid, mõista tervikpilti ning rakendada teadmisi päriselu olukordades." },
+];
+
+// ── Geometry ──────────────────────────────────────────────────────────────────
+const CX=400,CY=400,R0=76,R1=268,RL=298,HALO_R=316,LABEL_R=360,GAP=0.055;
+const N=DATA.length, NS=DATA[0].subs.length;
+const RING=(R1-R0)/NS, SECTOR=(2*Math.PI-N*GAP)/N;
+const LBL_FS=23, KW_FS=13.5, SUB_FS=9.5, KW_LINE_H=KW_FS*1.25;
+// Single font stack string for all SVG text — no FONT variable used at top-level
+const F = "'Inter', -apple-system, BlinkMacSystemFont, sans-serif";
+
+// ── State ─────────────────────────────────────────────────────────────────────
+let filled=DATA.map(()=>Array(NS).fill(false)), selectedTopic=null;
+const haloActive=new Set();
+
+// ── Descriptions ──────────────────────────────────────────────────────────────
+const LOREM="Lorem ipsum dolor sit amet, consectetur adipiscing elit.";
+const descriptions={};
+DATA.forEach(t=>t.subs.forEach(s=>{
+  const k=`${t.name}::${s}`;
+  if      (t.name==="Pärandil põhinev loome")                descriptions[k]="Pärandil põhinev loome on traditsiooniliste materjalide, töövõtete ja tehnoloogiliste lahenduste uurimine, mõistmine ja rakendamine tänapäevases kontekstis.\nSee toetab kestlikkust, funktsionaalsust ja kultuurilist järjepidevust ning loob silla mineviku teadmiste ja tuleviku lahenduste vahel.";
+  else if (t.name==="Inseneeria ja kaasaegsed tehnoloogiad") descriptions[k]="Selles moodulis õpivad õpilased mõistma ja looma tehnoloogilisi lahendusi. Nad kavandavad, ehitavad ja testivad erinevaid mehhaanilisi, elektroonilisi ja digitaalseid süsteeme ning õpivad lahendama päriselu probleeme inseneerilise mõtteviisi abil.";
+  else if (t.name==="Materjalide töötlemine")                descriptions[k]="Selles moodulis õpivad õpilased tundma erinevaid materjale ning nende omadusi ja kasutusvõimalusi. Nad kavandavad ja valmistavad esemeid, kasutades puidu, metalli, tekstiili ja teiste materjalide töötlemise põhivõtteid.";
+  else if (t.name==="Igapäevaelus toimetuleku oskused")      descriptions[k]="Selles moodulis arendavad õpilased praktilisi oskusi, mis toetavad iseseisvat ja teadlikku toimetulekut igapäevaelus. Fookuses on toidu valmistamine, majapidamise korraldamine, ressursside säästlik kasutamine ning turvaline ja vastutustundlik tegutsemine kodus ja kogukonnas.";
+  else descriptions[k]=LOREM;
+}));
+
+// ── DOM refs ──────────────────────────────────────────────────────────────────
+const svgEl=document.getElementById('wheel-svg');
+const tip=document.getElementById('tip');
+const connSvg=document.getElementById('connector-svg');
+const detailPanel=document.getElementById('detail-panel');
+const detailTitle=document.getElementById('detail-title');
+const detailTA=document.getElementById('detail-textarea');
+const haloOverlay=document.getElementById('halo-overlay');
+const haloTagsEl=document.getElementById('halo-tags');
+const steamOverlay=document.getElementById('steam-overlay');
+const steamBody=document.getElementById('steam-body');
+
+// ── SVG helpers ───────────────────────────────────────────────────────────────
+const $svg=tag=>document.createElementNS('http://www.w3.org/2000/svg',tag);
+const pt=(a,r)=>[CX+r*Math.cos(a),CY+r*Math.sin(a)];
+
+function ringPath(sa,ea,ri,ro){
+  const [ax,ay]=pt(sa,ro),[bx,by]=pt(ea,ro),[cx_,cy_]=pt(ea,ri),[dx,dy]=pt(sa,ri);
+  const lg=ea-sa>Math.PI?1:0;
+  return `M${ax},${ay} A${ro},${ro} 0 ${lg} 1 ${bx},${by} L${cx_},${cy_} A${ri},${ri} 0 ${lg} 0 ${dx},${dy}Z`;
+}
+function arcD(sa,ea,r,rev){
+  const [ax,ay]=pt(sa,r),[bx,by]=pt(ea,r),lg=ea-sa>Math.PI?1:0;
+  return rev?`M${bx},${by} A${r},${r} 0 ${lg} 0 ${ax},${ay}`:`M${ax},${ay} A${r},${r} 0 ${lg} 1 ${bx},${by}`;
+}
+function hexRgba(hex,a){
+  const r=parseInt(hex.slice(1,3),16),g=parseInt(hex.slice(3,5),16),b=parseInt(hex.slice(5,7),16);
+  return `rgba(${r},${g},${b},${a})`;
+}
+function makePill(x,y,w,h,rx,fill,stroke,sw){
+  const r=$svg('rect');
+  r.setAttribute('x',x-w/2); r.setAttribute('y',y-h/2);
+  r.setAttribute('width',w); r.setAttribute('height',h);
+  r.setAttribute('rx',rx); r.setAttribute('ry',rx);
+  r.setAttribute('fill',fill); r.setAttribute('stroke',stroke);
+  r.setAttribute('stroke-width',String(sw));
+  r.setAttribute('pointer-events','none');
+  return r;
+}
+
+// ── Render ────────────────────────────────────────────────────────────────────
+function render(){
+  svgEl.innerHTML='';
+  const defs=$svg('defs'); svgEl.appendChild(defs);
+  const isLight=html.getAttribute('data-theme')==='light';
+
+  const bgDisc=$svg('circle');
+  bgDisc.setAttribute('cx',CX); bgDisc.setAttribute('cy',CY);
+  bgDisc.setAttribute('r',R1+3); bgDisc.setAttribute('fill',cv('--wheel-bg'));
+  svgEl.appendChild(bgDisc);
+
+  // Drop-shadow filter for module labels
+  const lblFilter=$svg('filter');
+  lblFilter.setAttribute('id','lbl-shadow');
+  lblFilter.setAttribute('x','-30%'); lblFilter.setAttribute('y','-30%');
+  lblFilter.setAttribute('width','160%'); lblFilter.setAttribute('height','160%');
+  const fe1=$svg('feDropShadow');
+  fe1.setAttribute('dx','0'); fe1.setAttribute('dy','0'); fe1.setAttribute('stdDeviation','2.5');
+  fe1.setAttribute('flood-color',isLight?'rgba(255,255,255,0.9)':'rgba(0,0,0,0.9)');
+  fe1.setAttribute('flood-opacity','1');
+  lblFilter.appendChild(fe1); defs.appendChild(lblFilter);
+
+  DATA.forEach((topic,ti)=>{
+    const base=-Math.PI/2+ti*(SECTOR+GAP),sa=base+GAP/2,ea=sa+SECTOR,midA=(sa+ea)/2;
+    const flip=Math.sin(midA)>0.08;
+
+    // Ring segments + subtopic labels
+    topic.subs.forEach((sub,si)=>{
+      const ri=R0+si*RING+1.5,ro=R0+(si+1)*RING-1.5,midR=(ri+ro)/2,done=filled[ti][si];
+      const seg=$svg('path');
+      seg.setAttribute('d',ringPath(sa,ea,ri,ro));
+      seg.setAttribute('fill',done?topic.color:hexRgba(topic.color,isLight?0.18:0.13));
+      seg.setAttribute('stroke',cv('--wheel-bg')); seg.setAttribute('stroke-width','1.5');
+      seg.classList.add('arc-seg');
+      seg.addEventListener('click',()=>{filled[ti][si]=!filled[ti][si];render();updateSidebar();openDetail(ti,sub);});
+      seg.addEventListener('mousemove',ev=>{
+        if(!tip)return;
+        tip.style.display='block';tip.style.left=(ev.clientX+18)+'px';tip.style.top=(ev.clientY+12)+'px';
+        tip.innerHTML=`<b style="color:${topic.color}">${topic.name}</b><br>${sub}<br><span style="color:var(--muted);font-size:11px">${filled[ti][si]?'✓ Done — click to undo':'Click to mark complete'}</span>`;
+      });
+      seg.addEventListener('mouseleave',()=>{if(tip)tip.style.display='none';});
+      svgEl.appendChild(seg);
+
+      const pid=`p-${ti}-${si}`;
+      const pEl=$svg('path');pEl.setAttribute('id',pid);pEl.setAttribute('d',arcD(sa,ea,midR,flip));defs.appendChild(pEl);
+      const tEl=$svg('text');
+      tEl.setAttribute('font-size',String(SUB_FS));
+      tEl.setAttribute('font-weight','400');
+      tEl.setAttribute('font-family',F);
+      tEl.setAttribute('fill',done?(isLight?'rgba(0,0,0,0.85)':'rgba(255,255,255,0.9)'):hexRgba(topic.color,isLight?0.9:0.65));
+      tEl.setAttribute('pointer-events','none');
+      const tpEl=$svg('textPath');
+      tpEl.setAttribute('href',`#${pid}`);tpEl.setAttributeNS('http://www.w3.org/1999/xlink','xlink:href',`#${pid}`);
+      tpEl.setAttribute('startOffset','50%');tpEl.setAttribute('text-anchor','middle');
+      tpEl.setAttribute('dominant-baseline','middle');tpEl.setAttribute('dy','3.5');
+      tpEl.textContent=sub;tEl.appendChild(tpEl);svgEl.appendChild(tEl);
+    });
+
+    // Module label — pill backdrop + text
+    const lpid=`lp-${ti}`;
+    const lpEl=$svg('path');lpEl.setAttribute('id',lpid);lpEl.setAttribute('d',arcD(sa,ea,RL,flip));defs.appendChild(lpEl);
+
+    const pillArc=$svg('path');
+    pillArc.setAttribute('d',arcD(sa,ea,RL,flip));
+    pillArc.setAttribute('fill','none');
+    pillArc.setAttribute('stroke',isLight?'rgba(255,255,255,0.82)':'rgba(10,5,25,0.72)');
+    pillArc.setAttribute('stroke-width',String(LBL_FS*1.55));
+    pillArc.setAttribute('stroke-linecap','round');
+    pillArc.setAttribute('pointer-events','none');
+    pillArc.setAttribute('opacity','0.92');
+    svgEl.appendChild(pillArc);
+
+    const underline=$svg('path');
+    underline.setAttribute('d',arcD(sa,ea,RL+(LBL_FS*0.7),flip));
+    underline.setAttribute('fill','none');
+    underline.setAttribute('stroke',topic.color);
+    underline.setAttribute('stroke-width','2.5');
+    underline.setAttribute('stroke-linecap','round');
+    underline.setAttribute('opacity',isLight?'0.7':'0.6');
+    underline.setAttribute('pointer-events','none');
+    svgEl.appendChild(underline);
+
+    const ltEl=$svg('text');
+    ltEl.setAttribute('font-size',String(LBL_FS));
+    ltEl.setAttribute('font-weight','600');
+    ltEl.setAttribute('letter-spacing','0.01em');
+    ltEl.setAttribute('font-family',F);
+    ltEl.setAttribute('fill',topic.color);
+    ltEl.setAttribute('filter','url(#lbl-shadow)');
+    ltEl.setAttribute('pointer-events','none');
+    const ltpEl=$svg('textPath');
+    ltpEl.setAttribute('href',`#${lpid}`);ltpEl.setAttributeNS('http://www.w3.org/1999/xlink','xlink:href',`#${lpid}`);
+    ltpEl.setAttribute('startOffset','50%');ltpEl.setAttribute('text-anchor','middle');
+    ltpEl.setAttribute('dominant-baseline','middle');ltpEl.setAttribute('dy','4');
+    ltpEl.textContent=topic.name;ltEl.appendChild(ltpEl);svgEl.appendChild(ltEl);
+
+    const hit=$svg('path');
+    hit.setAttribute('d',ringPath(sa,ea,R1+2,RL+LBL_FS));
+    hit.setAttribute('fill',selectedTopic===ti?hexRgba(topic.color,0.15):'transparent');
+    hit.setAttribute('stroke',selectedTopic===ti?topic.color:'none');
+    hit.setAttribute('stroke-width','1.5');hit.style.cursor='pointer';
+    hit.addEventListener('click',()=>selectedTopic===ti?closeDetail():openDetail(ti,null));
+    hit.addEventListener('mouseenter',()=>{if(selectedTopic!==ti)hit.setAttribute('fill',hexRgba(topic.color,0.08));});
+    hit.addEventListener('mouseleave',()=>{if(selectedTopic!==ti)hit.setAttribute('fill','transparent');});
+    svgEl.appendChild(hit);
+  });
+
+  // ── Halo ──────────────────────────────────────────────────────────────────
+  const haloFilter=$svg('filter');
+  haloFilter.setAttribute('id','halo-blur');haloFilter.setAttribute('x','-20%');haloFilter.setAttribute('y','-20%');
+  haloFilter.setAttribute('width','140%');haloFilter.setAttribute('height','140%');
+  const feBlur=$svg('feGaussianBlur');feBlur.setAttribute('stdDeviation',isLight?'2':'3.5');
+  haloFilter.appendChild(feBlur);defs.appendChild(haloFilter);
+
+  const haloGlow=$svg('circle');
+  haloGlow.setAttribute('cx',CX);haloGlow.setAttribute('cy',CY);haloGlow.setAttribute('r',HALO_R);
+  haloGlow.setAttribute('fill','none');haloGlow.setAttribute('stroke',cv('--halo-glow'));
+  haloGlow.setAttribute('stroke-width',isLight?'6':'10');haloGlow.setAttribute('filter','url(#halo-blur)');
+  haloGlow.setAttribute('pointer-events','none');svgEl.appendChild(haloGlow);
+
+  const haloRing=$svg('circle');
+  haloRing.setAttribute('cx',CX);haloRing.setAttribute('cy',CY);haloRing.setAttribute('r',HALO_R);
+  haloRing.setAttribute('fill','none');haloRing.setAttribute('stroke',cv('--halo-ring'));
+  haloRing.setAttribute('stroke-width','1.5');haloRing.setAttribute('stroke-dasharray','6 4');
+  haloRing.setAttribute('pointer-events','none');svgEl.appendChild(haloRing);
+
+  // Halo keywords
+  const kwCount=HALO_KEYWORDS.length,angleStep=(2*Math.PI)/kwCount,startAngle=-Math.PI/2;
+  HALO_KEYWORDS.forEach((kw,i)=>{
+    const angle=startAngle+i*angleStep,active=haloActive.has(kw.text);
+    const bx=CX+LABEL_R*Math.cos(angle),by=CY+LABEL_R*Math.sin(angle);
+    const numLines=kw.lines.length,totalH=(numLines-1)*KW_LINE_H;
+    const maxLen=Math.max(...kw.lines.map(l=>l.length));
+    const pillW=maxLen*KW_FS*0.62+20,pillH=numLines*KW_LINE_H+10;
+
+    const pill=makePill(bx,by,pillW,pillH,7,
+      active?cv('--kw-bg-active'):cv('--kw-bg'),
+      cv('--kw-stroke'), active?1.2:0.7);
+    pill.classList.add('kw-bg');
+    pill.setAttribute('opacity',active?'0.82':'0.55');
+    svgEl.appendChild(pill);
+
+    const g=$svg('g');g.classList.add('halo-kw');g.style.cursor='pointer';
+    kw.lines.forEach((line,li)=>{
+      const yOff=li*KW_LINE_H-totalH/2;
+      const t=$svg('text');
+      t.setAttribute('x',bx);t.setAttribute('y',by+yOff);
+      t.setAttribute('text-anchor','middle');t.setAttribute('dominant-baseline','middle');
+      t.setAttribute('font-size',String(KW_FS));
+      t.setAttribute('font-weight','500');
+      t.setAttribute('letter-spacing','0.03em');
+      t.setAttribute('font-family',F);
+      t.setAttribute('fill',active?cv('--kw-active'):cv('--kw-fill'));
+      t.setAttribute('pointer-events','none');
+      t.textContent=line;g.appendChild(t);
+    });
+
+    const hitR=$svg('rect');
+    hitR.setAttribute('x',bx-pillW/2);hitR.setAttribute('y',by-pillH/2);
+    hitR.setAttribute('width',pillW);hitR.setAttribute('height',pillH);
+    hitR.setAttribute('fill','transparent');hitR.setAttribute('stroke','none');
+    g.appendChild(hitR);
+
+    g.addEventListener('click',()=>{
+      haloActive.has(kw.text)?haloActive.delete(kw.text):haloActive.add(kw.text);
+      render();renderHaloTags();
+      if(kw.info)openSteamModal(kw.text,kw.info);
+    });
+    g.addEventListener('mousemove',ev=>{
+      if(!tip)return;
+      tip.style.display='block';tip.style.left=(ev.clientX+18)+'px';tip.style.top=(ev.clientY+12)+'px';
+      tip.innerHTML=`<b style="color:var(--modal-hdr)">Läbivad pädevused</b><br>${kw.text}<br><span style="color:var(--muted);font-size:11px">${active?'✓ Aktiivne — kliki eemaldamiseks':'Kliki aktiveerimiseks'}</span>`;
+    });
+    g.addEventListener('mouseleave',()=>{if(tip)tip.style.display='none';});
+    svgEl.appendChild(g);
+  });
+
+  // Centre
+  const total=N*NS,done=filled.flat().filter(Boolean).length,pct=Math.round(done/total*100);
+  const cc=$svg('circle');cc.setAttribute('cx',CX);cc.setAttribute('cy',CY);cc.setAttribute('r',R0-8);cc.setAttribute('fill',cv('--wheel-bg'));svgEl.appendChild(cc);
+  const ct=$svg('text');ct.setAttribute('x',CX);ct.setAttribute('y',CY+10);ct.setAttribute('text-anchor','middle');ct.setAttribute('font-size','24');ct.setAttribute('font-weight','700');ct.setAttribute('font-family',F);ct.setAttribute('fill',pct===100?'#22c55e':cv('--text'));ct.textContent=pct+'%';svgEl.appendChild(ct);
+  const cl=$svg('text');cl.setAttribute('x',CX);cl.setAttribute('y',CY-12);cl.setAttribute('text-anchor','middle');cl.setAttribute('font-size','7.5');cl.setAttribute('font-weight','500');cl.setAttribute('letter-spacing','0.08em');cl.setAttribute('fill',cv('--muted'));cl.setAttribute('font-family',F);cl.textContent='PROGRESS';svgEl.appendChild(cl);
+}
+
+// ── Sidebar ───────────────────────────────────────────────────────────────────
+function updateSidebar(){
+  const total=N*NS,done=filled.flat().filter(Boolean).length,pct=Math.round(done/total*100);
+  const oEl=document.getElementById('ovr-pct');
+  if(oEl){oEl.textContent=pct+'%';oEl.style.color=pct===100?'#22c55e':'';}
+  const container=document.getElementById('subject-cards');
+  if(!container)return;
+  container.innerHTML='';
+  DATA.forEach((topic,ti)=>{
+    const td=filled[ti].filter(Boolean).length,row=document.createElement('div');
+    row.className='t-row';
+    row.innerHTML=`<div class="t-head"><span class="t-name" style="color:${topic.color}">${topic.name}</span><span class="t-count">${td}/${NS}</span></div>
+      <div class="bar"><div class="bar-fill" style="width:${Math.round(td/NS*100)}%;background:${topic.color}"></div></div>
+      <div class="tags">${topic.subs.map((s,si)=>`<span class="tag ${filled[ti][si]?'done':'pend'}" style="color:${topic.color};border-color:${topic.color}">${filled[ti][si]?'✓ ':''}${s}</span>`).join('')}</div>`;
+    container.appendChild(row);
+  });
+}
+
+// ── Connector ─────────────────────────────────────────────────────────────────
+function updateConnector(){
+  if(!connSvg)return;connSvg.innerHTML='';
+  if(selectedTopic===null)return;
+  const ti=selectedTopic,topic=DATA[ti];
+  const base=-Math.PI/2+ti*(SECTOR+GAP),sa=base+GAP/2,ea=sa+SECTOR,midA=(sa+ea)/2;
+  const wheelEl=document.getElementById('wheel-svg'),panelEl=document.getElementById('detail-panel'),layoutEl=document.querySelector('.layout-wrap');
+  if(!wheelEl||!panelEl||!layoutEl)return;
+  const wRect=wheelEl.getBoundingClientRect(),pRect=panelEl.getBoundingClientRect(),lRect=layoutEl.getBoundingClientRect();
+  const scale=wRect.width/800;
+  const wcy=(wRect.top-lRect.top)+CY*scale;
+  const wx=(wRect.left-lRect.left)+(CX+RL*Math.cos(midA))*scale;
+  const wy=(wRect.top-lRect.top)+(CY+RL*Math.sin(midA))*scale;
+  const px=pRect.right-lRect.left,py=pRect.top-lRect.top+28;
+  const cosA=Math.cos(midA),sinA=Math.sin(midA),bypassR=(RL+60)*scale;
+  let d;
+  if(cosA>-0.3){const byY=sinA<=0?wcy-bypassR:wcy+bypassR,span=Math.abs(wx-px);d=`M${px},${py} C${px+span*0.35},${byY} ${wx-span*0.25},${byY} ${wx},${wy}`;}
+  else{const dx=wx-px,arc=Math.abs(wy-py)*0.45+30,midX=px+dx*0.5;d=`M${px},${py} C${midX},${py-arc} ${midX},${wy-arc*0.4} ${wx},${wy}`;}
+  const mk=s=>document.createElementNS('http://www.w3.org/2000/svg',s);
+  const path=mk('path');path.setAttribute('d',d);path.setAttribute('stroke',topic.color);path.setAttribute('stroke-width','2');path.setAttribute('fill','none');path.setAttribute('stroke-linecap','round');path.classList.add('connector-path');connSvg.appendChild(path);
+  const dot=mk('circle');dot.setAttribute('cx',wx);dot.setAttribute('cy',wy);dot.setAttribute('r','4.5');dot.setAttribute('fill',topic.color);dot.classList.add('connector-dot');connSvg.appendChild(dot);
+}
+
+// ── Detail panel ──────────────────────────────────────────────────────────────
+function positionPanel(){
+  if(!detailPanel)return;
+  const wheelEl=document.getElementById('wheel-svg'),wrapEl=document.querySelector('.layout-wrap');
+  if(!wheelEl||!wrapEl)return;
+  const wRect=wheelEl.getBoundingClientRect(),wrapRect=wrapEl.getBoundingClientRect();
+  detailPanel.style.left=((wRect.left-wrapRect.left)-24-260)+'px';
+  detailPanel.style.top=(wRect.top-wrapRect.top)+'px';
+}
+function openDetail(ti,sub){
+  if(!detailPanel||!detailTitle||!detailTA)return;
+  selectedTopic=ti;
+  const topic=DATA[ti],key=sub?`${topic.name}::${sub}`:`${topic.name}::${topic.subs[0]}`;
+  detailTitle.textContent=sub?`${topic.name} — ${sub}`:topic.name;
+  detailTitle.style.color=topic.color;
+  detailTA.value=descriptions[key]||'';detailTA.dataset.key=key;
+  detailPanel.classList.add('open');render();
+  requestAnimationFrame(()=>{positionPanel();updateConnector();});
+}
+function closeDetail(){
+  selectedTopic=null;
+  if(detailPanel)detailPanel.classList.remove('open');
+  if(connSvg)connSvg.innerHTML='';
+  render();
+}
+const dcBtn=document.getElementById('detail-close');
+if(dcBtn)dcBtn.addEventListener('click',closeDetail);
+if(detailTA)detailTA.addEventListener('input',ev=>{const k=ev.target.dataset.key;if(k)descriptions[k]=ev.target.value;});
+
+// ── STEAM modal ───────────────────────────────────────────────────────────────
+function openSteamModal(title,info){
+  if(!steamOverlay||!steamBody)return;
+  steamBody.textContent=info;steamOverlay.style.display='flex';
+}
+const scBtn=document.getElementById('steam-close');
+if(scBtn)scBtn.addEventListener('click',()=>{if(steamOverlay)steamOverlay.style.display='none';});
+if(steamOverlay)steamOverlay.addEventListener('click',e=>{if(e.target===steamOverlay)steamOverlay.style.display='none';});
+
+// ── Halo modal ────────────────────────────────────────────────────────────────
+function renderHaloTags(){
+  if(!haloTagsEl)return;
+  const isLight=html.getAttribute('data-theme')==='light';
+  haloTagsEl.innerHTML='';
+  HALO_KEYWORDS.forEach(kw=>{
+    const active=haloActive.has(kw.text);
+    const tag=document.createElement('span');
+    tag.textContent=(active?'✓ ':'')+kw.text;
+    const activeBg=isLight?'rgba(109,40,217,0.15)':'rgba(124,58,237,0.35)';
+    const pendBg=isLight?'rgba(109,40,217,0.06)':'rgba(124,58,237,0.08)';
+    const activeCol=isLight?'#4c1d95':'#fff';
+    const pendCol=isLight?'#6d28d9':'#c084fc';
+    tag.style.cssText=`font-size:0.72rem;padding:5px 12px;border-radius:99px;border:1px solid #7c3aed;color:${active?activeCol:pendCol};background:${active?activeBg:pendBg};cursor:pointer;transition:all 0.18s;font-weight:${active?'600':'500'};font-family:inherit;`;
+    tag.addEventListener('click',()=>{haloActive.has(kw.text)?haloActive.delete(kw.text):haloActive.add(kw.text);render();renderHaloTags();});
+    haloTagsEl.appendChild(tag);
+  });
+}
+const hcBtn=document.getElementById('halo-close');
+if(hcBtn)hcBtn.addEventListener('click',()=>{if(haloOverlay)haloOverlay.style.display='none';});
+if(haloOverlay)haloOverlay.addEventListener('click',e=>{if(e.target===haloOverlay)haloOverlay.style.display='none';});
+
+// ── Buttons ───────────────────────────────────────────────────────────────────
+const btnReset=document.getElementById('btn-reset');
+const btnDemo=document.getElementById('btn-demo');
+if(btnReset)btnReset.addEventListener('click',()=>{filled=DATA.map(()=>Array(NS).fill(false));render();updateSidebar();});
+if(btnDemo) btnDemo.addEventListener('click', ()=>{filled=DATA.map(()=>Array(NS).fill(true)); render();updateSidebar();});
+
+// ── Init ──────────────────────────────────────────────────────────────────────
+render();
+updateSidebar();
+
+}); // end DOMContentLoaded
+</script>
+</body>
+</html>
